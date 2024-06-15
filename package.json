@@ -1,0 +1,12 @@
+{
+    "name": "discord-bot-al",
+    "version": "0.1.0",
+    "description": "Discord app for anime and game data lookup",
+    "main": "app.js",
+    "type": "module",
+    "author": "Tan Teck Jun",
+    "license": "MIT",
+    "dependencies": {
+        "discord-interactions": "^4.0.0"
+    }
+}
