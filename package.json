@@ -7,6 +7,16 @@
     "author": "Tan Teck Jun",
     "license": "MIT",
     "dependencies": {
-        "discord-interactions": "^4.0.0"
+        "discord-interactions": "^4.0.0",
+        "dotenv": "^16.0.3",
+        "express": "^4.18.2",
+        "node-fetch": "^3.3.0"
+    },
+    "scripts": {
+        "start": "node app.js",
+        "register": "node commands.js"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.15"
     }
 }
