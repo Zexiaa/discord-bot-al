@@ -1,57 +1,66 @@
-const { 
+import { 
     Client, 
     Collection, 
     Events, 
     GatewayIntentBits 
-} = require('discord.js');
-require('dotenv/config');
-const fs = require('node:fs');
-const path = require('node:path');
+} from 'discord.js';
+import { readdirSync } from "fs";
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import 'dotenv/config';
 
-// Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
 
+/* REGISTER SLASH COMMANDS FOR DISCORD */
 client.commands = new Collection();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const commandsRoot = join(__dirname, "commands");
 
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+// Read all files from command directory
+const commandFiles = [];
+readdirSync(commandsRoot).forEach(category => {
+	readdirSync(join(commandsRoot, category)).map(file => {
+		if (file.endsWith('.js'))
+			commandFiles.push(`./commands/${category}/${file}`);
+	});
+});
 
-for (const folder of commandFolders) {
-	const commandsPath = path.join(foldersPath, folder);
-	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+try {
+	console.log(`Attempting to register command modules...`)
 	for (const file of commandFiles) {
-		const filePath = path.join(commandsPath, file);
-		const command = require(filePath);
-		// Set a new item in the Collection with the key as the command name and the value as the exported module
+		const { command } = await import(file);
 		if ('data' in command && 'execute' in command) {
 			client.commands.set(command.data.name, command);
-		} else {
-			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
 	}
+	console.log(`Registration success!`)
+}
+catch (e) {
+	console.error(e);
 }
 
-client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
-
-	const command = interaction.client.commands.get(interaction.commandName);
-
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-	}
-
-	try {
-		await command.execute(interaction);
-	} catch (error) {
-		console.error(error);
-		if (interaction.replied || interaction.deferred) {
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-		}
-	}
+// Read all events
+const eventsRoot = join(__dirname, "events");
+const eventFiles = [];
+readdirSync(eventsRoot).forEach(file => {
+	if (file.endsWith('.js'))
+		eventFiles.push(`./events/${file}`);
 });
+
+try {
+	console.log(`Attempting to register event modules...`);
+	for (const file of eventFiles) {
+		const { event } = await import(file);
+		if (event.once)
+			client.once(event.name, (...args) => event.execute(...args));
+		else
+			client.on(event.name, (...args) => event.execute(...args));
+	}
+	console.log(`Successfully registered (${eventFiles.length}) events`);
+}
+catch (e) {
+	console.error(e);
+}
 
 // When the client is ready, run this code (only once).
 // The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.

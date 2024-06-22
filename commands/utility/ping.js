@@ -1,6 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+import { SlashCommandBuilder } from "discord.js";
 
-module.exports = {
+export const command = {
 	data: new SlashCommandBuilder()
 		.setName('ping')
 		.setDescription('Check up status of Al'),
