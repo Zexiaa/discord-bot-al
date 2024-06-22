@@ -10,14 +10,16 @@ export const event = {
 		const content = message.content.toLowerCase();
 
 		let found = false;
-		messageToFind.forEach(text => {
+		messageToFind.forEach((text) => {
+			if (found)
+				return;
+
 			const regex = new RegExp(`\\b` + text + `\\b`);
 			found = regex.test(content);
+
+			if (found) {
+				message.channel.send("Put put");
+			}
 		});
-
-		if (found)
-			message.channel.send("Put put");
-			//console.log(`Message read: ${message.content}`)
-
 	},
 };
