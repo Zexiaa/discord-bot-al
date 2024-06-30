@@ -2,11 +2,11 @@ import { Events } from "discord.js";
 
 export const event = {
 	name: Events.MessageCreate,
-	once : false,
+	once: false,
 	async execute(message) {
 		if(message.author.bot) return;
 
-		const messageToFind = ["put", "putt"];
+		const messageToFind = ["put", "putt", "puts"];
 		const content = message.content.toLowerCase();
 
 		let found = false;

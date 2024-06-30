@@ -37,13 +37,24 @@ const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 	try {
 		console.log(`Started refreshing ${commandsList.length} application (/) commands.`);
 
-		// The put method is used to fully refresh all commands in the guild with the current set
-		const data = await rest.put(
-			Routes.applicationCommands(process.env.DISCORD_APPLICATION_ID),
-			{ body: commandsList },
-		);
+		if (process.env.NODE_ENV === "production")
+		{
+			// The put method is used to fully refresh all commands in the guild with the current set
+			const data = await rest.put(
+				Routes.applicationCommands(process.env.DISCORD_APPLICATION_ID),
+				{ body: commandsList },
+			);
+			console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		}
+		else {
+			console.log(`Development environment detected, refreshing in test guild`);
+			const data = await rest.put(
+				Routes.applicationGuildCommands(process.env.DISCORD_APPLICATION_ID, process.env.DISCORD_GUILD_ID),
+				{ body: commandsList },
+			);
+			console.log(`Successfully reloaded ${data.length} application (/) commands in test.`);
+		}
 
-		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!
 		console.error(error);
