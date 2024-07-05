@@ -7,6 +7,7 @@ import {
 import { readdirSync } from "fs";
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { StartScheduler } from './job_scheduler.js';
 import * as db from './services/db-util.js';
 import 'dotenv/config';
 
@@ -71,6 +72,7 @@ client.once(Events.ClientReady, readyClient => {
 });
 
 db.checkDb();
+StartScheduler(client);
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);

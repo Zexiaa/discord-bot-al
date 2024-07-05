@@ -68,7 +68,7 @@ export const command = {
 			return;
 		}
 
-		if (date > 31 || month > 12 || hour > 24 || minute > 60 ||
+		if (date > 31 || month > 12 || hour > 23 || minute > 60 ||
 			date < 1 || month < 1 || hour < 0 || minute < 0
 		) {
 			const input = `${date}/${month}/${year} ${hour}:${minute}`;
@@ -79,7 +79,7 @@ export const command = {
 		// Refuse past datetime
 		let inputDate = new Date();
 		try {
-			inputDate = new Date(year, month, date, hour, minute);
+			inputDate = new Date(year, month-1, date, hour, minute); //Jan starts at 0
 			if (inputDate < Date.now()) {
 				await interaction.reply({ content: `Date input (${inputDate}) is in the past.`, ephemeral: true });
 				return;

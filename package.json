@@ -10,7 +10,8 @@
         "discord.js": "^14.15.3",
         "dotenv": "^16.4.5",
         "postgres": "^3.4.4",
-        "toad-scheduler": "^3.0.1"
+        "toad-scheduler": "^3.0.1",
+        "node-schedule": "^2.1.1"
     },
     "scripts": {
         "start": "node app.js",

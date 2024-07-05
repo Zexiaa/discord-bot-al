@@ -1,11 +1,11 @@
 import { sql } from './db-util.js';
 
-export const insertReminder = async (userId, triggerDate, messageText) => {
+export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
     
     try {
         await sql`
-            INSERT INTO al_schema.reminder_message(userId, triggerDate, messageText)
-            VALUES (${userId}, ${triggerDate}, ${messageText})
+            INSERT INTO al_schema.reminder_message(userId, channelId, triggerDate, messageText)
+            VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
         `
         return { success: true };
     }
@@ -17,7 +17,6 @@ export const insertReminder = async (userId, triggerDate, messageText) => {
 }
 
 export const getRemindersWithinInterval = async () => {
-    
     console.log("Attempting to get reminders in 30 minute bracket...");
     try {
        const res = await sql`
@@ -46,6 +45,34 @@ export const getReminderById = async (id) => {
     catch (e) {
         console.error(`Error retrieving reminder of id ${id} ` + e);
     }
+    return { success: false };
+}
+
+export const deleteOverdueReminders = async () => {
+    console.log("Attempting to delete reminders before current time...");
+    try {
+        console.log("Checking for any overdue reminders...");
+        const res = await sql`
+            SELECT * FROM al_schema.reminder_message
+            WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
+        `
+
+        if (res.length > 0) {
+            await sql`
+                DELETE FROM al_schema.reminder_message
+                WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
+            `
+            console.log("Successfully deleted.");
+        }
+        else {
+            console.log(`No reminders before current time found!`);
+        }        
+        return { success: true };
+    }
+    catch (e) {
+        console.error(`Error retrieving data ` + e);
+    }
+
     return { success: false };
 }
 

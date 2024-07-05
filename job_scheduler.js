@@ -1,7 +1,13 @@
 import { ToadScheduler, SimpleIntervalJob, Task } from 'toad-scheduler';
-import { getRemindersWithinInterval } from "./services/util-service";
+import { deleteOverdueReminders, deleteReminderById, getRemindersWithinInterval } from "./services/util-service";
+import { ReminderTrigger } from './constants/constants.js';
+import schedule from 'node-schedule';
 
-export default function StartScheduler() {
+var currentClient;
+
+export default function StartScheduler(client) {
+  currentClient = client;
+  
   const scheduler = new ToadScheduler();
 
   const reminderTask = new Task('check reminder', checkReminders)
@@ -15,9 +21,14 @@ export default function StartScheduler() {
 }
 
 const checkReminders = async () => {
+  await deleteOverdueReminders();
+
+  await schedule.gracefulShutdown();
+
   const res = await getRemindersWithinInterval();
-  
   if (res.data.length > 0) {
-    //queue timeouts
+    schedule.scheduleJob(res.data.triggerDate, () => {
+      currentClient.emit(ReminderTrigger, currentClient, res.data);
+    })
   }
 }
