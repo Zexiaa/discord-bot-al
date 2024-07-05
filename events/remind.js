@@ -6,6 +6,6 @@ export const event = {
     async execute(client, reminder) {
       client.channels.fetch(reminder.channelId).then(channel => {
         channel.send(`<@${reminder.userId}> This is your scheduled reminder.`)
-      }).catch(e => { console.error(e) });
+      }).catch(e => { console.error("Error occurred while trying to send reminder: " + e) });
     }
 };
