@@ -33,3 +33,45 @@ export const getRemindersWithinInterval = async () => {
 
     return { success: false };
 }
+
+export const getReminderById = async (id) => {
+    console.log(`Attempting to get reminder by id ${id}`);
+    try {
+        const res = await sql`
+            SELECT * FROM al_schema.reminder_message
+            WHERE id = ${id}
+        `
+        return { success: true, data: res };
+    }
+    catch (e) {
+        console.error(`Error retrieving reminder of id ${id} ` + e);
+    }
+    return { success: false };
+}
+
+export const deleteReminderById = async (id) => {
+    console.log(`Attempting to delete reminder with id ${id}`);
+    try {
+        console.log(`Checking if reminder exists...`);
+        const res = await sql`
+            SELECT * FROM al_schema.reminder_message
+            WHERE id = ${id}
+        `
+        if (res.length > 0) {
+            await sql`
+                DELETE FROM al_schema.reminder_message 
+                WHERE id = ${id}
+            `
+            console.log(`Reminder successfully deleted.`);
+        }
+        else {
+            console.log(`No reminder of id ${id} found!`);
+        }
+        return { success: true };
+    }
+    catch (e) {
+        console.error(`Error deleting reminder ` + e);
+    }
+
+    return { success: false };
+}
