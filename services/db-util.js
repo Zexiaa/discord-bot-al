@@ -2,13 +2,21 @@ import "dotenv/config";
 import postgres from 'postgres';
 import { pg_database } from '../constants/constants.js';
 
-export const sql = postgres({
-    username: process.env.PG_USER,
-    password: process.env.PG_PASSWORD,
-    host: process.env.PG_HOST,
-    port: process.env.PG_PORT,
-    database: pg_database
-})
+var sqlConn;
+if (process.env.NODE_ENV === "production") {
+    sqlConn = postgres(process.env.PG_DATABASE_URL)
+}
+else {
+    sqlConn = postgres({
+        username: process.env.PG_USER,
+        password: process.env.PG_PASSWORD,
+        host: process.env.PG_HOST,
+        port: process.env.PG_PORT,
+        database: pg_database
+    });
+}
+
+export const sql = sqlConn;
 
 // Create DB and tables
 export const checkDb = async () => {
