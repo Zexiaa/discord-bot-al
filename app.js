@@ -7,6 +7,8 @@ import {
 import { readdirSync } from "fs";
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { StartScheduler } from './job_scheduler.js';
+import * as db from './services/db-util.js';
 import 'dotenv/config';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
@@ -33,7 +35,7 @@ try {
 			client.commands.set(command.data.name, command);
 		}
 	}
-	console.log(`Registration success!`)
+	console.log(`Successfully registered (${commandFiles.length}) commands`)
 }
 catch (e) {
 	console.error(e);
@@ -68,6 +70,9 @@ catch (e) {
 client.once(Events.ClientReady, readyClient => {
 	console.log(`${readyClient.user.tag} System Online.`);
 });
+
+db.checkDb();
+StartScheduler(client);
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);

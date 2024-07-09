@@ -8,6 +8,9 @@ primary_region = 'hkg'
 
 [build]
 
+[processes]
+  app = "npm run start"
+
 [http_service]
   internal_port = 3000
   force_https = true
@@ -17,6 +20,6 @@ primary_region = 'hkg'
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
