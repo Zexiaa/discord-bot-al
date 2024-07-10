@@ -1,5 +1,5 @@
 import { ToadScheduler, SimpleIntervalJob, Task } from 'toad-scheduler';
-import { deleteOverdueReminders, deleteReminderById, getRemindersWithinInterval } from "./services/util-service";
+import { deleteOverdueReminders, deleteReminderById, getRemindersWithinInterval } from "./services/util-service.js";
 import { ReminderTrigger } from './constants/constants.js';
 import schedule from 'node-schedule';
 
