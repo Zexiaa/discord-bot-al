@@ -2,7 +2,7 @@ import "dotenv/config";
 import postgres from 'postgres';
 import { pg_database } from '../constants/constants.js';
 
-export const sql = postgres('postgres://username:password@host:port/database', {
+export const sql = postgres({
         username: process.env.PG_USER,
         password: process.env.PG_PASSWORD,
         host: process.env.PG_HOST,

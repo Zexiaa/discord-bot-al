@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { codeBlock, SlashCommandBuilder } from "discord.js";
 import * as db from '../../services/util-service.js';
 
 export const command = {
@@ -92,7 +92,7 @@ export const command = {
 
 		const res = await db.insertReminder(interaction.user.id, inputDate, message);
 		if (res.success) 
-			await interaction.reply(`Roger. I will remind you on ${inputDate}`);
+			await interaction.reply(`Roger. I will remind you on ${inputDate} with the following message:\n${codeBlock(message)}`);
 
 		else
 			await interaction.reply(`Error encountered.`);

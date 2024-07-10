@@ -7,7 +7,7 @@ import {
 import { readdirSync } from "fs";
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { StartScheduler } from './job_scheduler.js';
+import StartScheduler from './job_scheduler.js';
 import * as db from './services/db-util.js';
 import 'dotenv/config';
 
