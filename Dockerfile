@@ -6,6 +6,9 @@ FROM node:${NODE_VERSION}-slim as base
 
 LABEL fly_launch_runtime="Node.js"
 
+COPY discord_bot/package.json /app/discord_bot/package.json
+COPY scraper_worker/package.json /app/scraper_worker/package.json
+
 # Node.js app lives here
 WORKDIR /app
 
@@ -21,12 +24,16 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
 # Install node modules
-COPY --link package-lock.json package.json ./
-RUN npm ci
+# COPY --link package-lock.json package.json ./
+# RUN npm ci
+RUN cd ./discord_bot \
+    && npm ci \
+    && cd ../scraper_worker \
+    && npm ci
 
 # Copy application code
-COPY --link . .
-
+# COPY --link . .
+COPY . ./
 
 # Final stage for app image
 FROM base
@@ -36,5 +43,6 @@ COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-RUN npm run register
-CMD [ "npm", "run", "start" ]
+# CMD [ "npm", "run", "start" ]
+
+ENTRYPOINT ["npm"]
