@@ -90,7 +90,7 @@ export const command = {
 			return;
 		}
 
-		const res = await db.insertReminder(interaction.user.id, inputDate, message);
+		const res = await db.insertReminder(interaction.user.id, interaction.channelId, inputDate, message);
 		if (res.success) 
 			await interaction.reply(`Roger. I will remind you on ${inputDate} with the following message:\n${codeBlock(message)}`);
 
