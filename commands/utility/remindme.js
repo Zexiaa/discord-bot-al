@@ -1,4 +1,5 @@
 import { codeBlock, SlashCommandBuilder } from "discord.js";
+import { DateTime } from "luxon";
 import * as db from '../../services/util-service.js';
 
 export const command = {
@@ -75,13 +76,15 @@ export const command = {
 			await interaction.reply({ content: `Date input (${input}) is incorrect.`, ephemeral: true });
 			return;
 		}
+		
+		const messageTime = DateTime.fromISO(interaction.message.timestamp);
 
 		// Refuse past datetime
-		let inputDate = new Date();
+		let inputDate = DateTime.now();
 		try {
-			inputDate = new Date(year, month-1, date, hour, minute); //Jan starts at 0
-			if (inputDate < Date.now()) {
-				await interaction.reply({ content: `Date input (${inputDate}) is in the past.`, ephemeral: true });
+			inputDate = DateTime.utc( { day: date, month: month, year: year, hour: hour, minute: minute }, { zone: messageTime.zoneName }); //Jan starts at 0
+			if (inputDate < DateTime.now()) {
+				await interaction.reply({ content: `Date input (${inputDate.toString()}) is in the past.`, ephemeral: true });
 				return;
 			}
 		}
@@ -90,10 +93,9 @@ export const command = {
 			return;
 		}
 
-		const res = await db.insertReminder(interaction.user.id, interaction.channelId, inputDate, message);
-		if (res.success) 
-			await interaction.reply(`Roger. I will remind you on ${inputDate} with the following message:\n${codeBlock(message)}`);
-
+		const res = await db.insertReminder(interaction.user.id, interaction.channelId, inputDate.toLocal(), message);
+		if (res.success)
+			await interaction.reply(`Roger. I will remind you on ${inputDate.toString()} with the following message:\n${codeBlock(message)}`);
 		else
 			await interaction.reply(`Error encountered.`);
 	},

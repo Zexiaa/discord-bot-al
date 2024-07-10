@@ -25,10 +25,15 @@ const checkReminders = async () => {
 
   await schedule.gracefulShutdown();
 
-  const res = await getRemindersWithinInterval();
+  const res = await getRemindersWithinInterval(); 
+  // TODO: Doesn't handle multiple
   if (res.data.length > 0) {
-    schedule.scheduleJob(res.data.triggerDate, () => {
-      currentClient.emit(ReminderTrigger, currentClient, res.data);
-    })
+    addReminderTrigger(res.data);
   }
+}
+
+export const addReminderTrigger = (data) => {
+  schedule.scheduleJob(data.triggerDate, () => {
+    currentClient.emit(ReminderTrigger, currentClient, data);
+  });
 }

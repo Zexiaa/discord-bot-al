@@ -1,12 +1,21 @@
 import { sql } from './db-util.js';
+import { DateTime } from 'luxon';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
     
     try {
-        await sql`
+        const res = await sql`
             INSERT INTO al_schema.reminder_message(userid, channelid, triggerdate, messagetext)
             VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
+            returning userid, channelid, triggerdate, messagetext
         `
+
+        // TODO Debug this
+        // Change to check minutes
+        if (DateTime.now() - triggerDate < 30) {
+            addReminderTrigger(res.data);
+        }
+
         return { success: true };
     }
     catch (e) {
