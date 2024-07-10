@@ -4,7 +4,7 @@ export const insertReminder = async (userId, channelId, triggerDate, messageText
     
     try {
         await sql`
-            INSERT INTO al_schema.reminder_message(userId, channelId, triggerDate, messageText)
+            INSERT INTO al_schema.reminder_message(userid, channelid, triggerdate, messagetext)
             VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
         `
         return { success: true };
