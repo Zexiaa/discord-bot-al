@@ -12,9 +12,9 @@ export const insertReminder = async (userId, channelId, triggerDate, messageText
 
         // TODO Debug this
         // Change to check minutes
-        if (DateTime.now() - triggerDate < 30) {
-            addReminderTrigger(res.data);
-        }
+        // if (DateTime.now() - triggerDate < 30) {
+        //     addReminderTrigger(res.data);
+        // }
 
         return { success: true };
     }

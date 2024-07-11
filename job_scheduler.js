@@ -23,7 +23,7 @@ export default function StartScheduler(client) {
 const checkReminders = async () => {
   await deleteOverdueReminders();
 
-  await schedule.gracefulShutdown();
+  // await schedule.gracefulShutdown();
 
   const res = await getRemindersWithinInterval(); 
   // TODO: Doesn't handle multiple

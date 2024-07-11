@@ -1,5 +1,7 @@
 import { codeBlock, SlashCommandBuilder } from "discord.js";
+import { ReminderTrigger } from "../../constants/constants.js";
 import { DateTime } from "luxon";
+import schedule from 'node-schedule';
 import * as db from '../../services/util-service.js';
 
 export const command = {
@@ -94,8 +96,15 @@ export const command = {
 		}
 
 		const res = await db.insertReminder(interaction.user.id, interaction.channelId, inputDate.toLocal(), message);
-		if (res.success)
+		if (res.success) {
 			await interaction.reply(`Roger. I will remind you on ${inputDate.toString()} with the following message:\n${codeBlock(message)}`);
+			
+			if (DateTime.now() - inputDate.toLocal() < 30) {
+				schedule.scheduleJob(inputDate.toLocal(), () => {
+					interaction.client.emit(ReminderTrigger, interaction.client, data);
+				});
+			}
+		}
 		else
 			await interaction.reply(`Error encountered.`);
 	},
