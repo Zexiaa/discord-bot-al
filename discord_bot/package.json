@@ -1,0 +1,25 @@
+{
+  "name": "al-bot",
+  "version": "0.2.1",
+  "description": "Bot service that runs in Discord",
+  "main": "app.js",
+  "type": "module",
+  "author": "Tan Teck Jun",
+  "license": "MIT",
+  "dependencies": {
+      "discord.js": "^14.15.3",
+      "dotenv": "^16.4.5",
+      "postgres": "^3.4.4",
+      "toad-scheduler": "^3.0.1",
+      "node-schedule": "^2.1.1"
+  },
+  "scripts": {
+      "start": "node app.js",
+      "register": "node deploy-commands.js",
+      "dev": "nodemon app.js"
+  },
+  "devDependencies": {
+      "@flydotio/dockerfile": "^0.5.7",
+      "nodemon": "^3.1.3"
+  }
+}

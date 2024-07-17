@@ -8,9 +8,6 @@ primary_region = 'hkg'
 
 [build]
 
-[processes]
-  app = "npm run start"
-
 [http_service]
   internal_port = 3000
   force_https = true
@@ -23,3 +20,6 @@ primary_region = 'hkg'
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+
+[deploy]
+  release_command = "/discord_bot npm run register"

@@ -1,0 +1,17 @@
+{
+  "name": "al-bot-scraper",
+  "version": "0.1.0",
+  "description": "Web scraper worker for Discord bot",
+  "main": "app.js",
+  "type": "module",
+  "author": "Tan Teck Jun",
+  "license": "MIT",
+  "dependencies": {
+      "puppeteer": "^22.12.1"
+  },
+  "scripts": {
+      "start": "node app.js"
+  },
+  "devDependencies": {
+  }
+}
