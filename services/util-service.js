@@ -3,11 +3,12 @@ import { sql } from './db-util.js';
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
     
     try {
-        await sql`
+        const res = await sql`
             INSERT INTO al_schema.reminder_message(userid, channelid, triggerdate, messagetext)
             VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
+            returning userid, channelid, triggerdate, messagetext
         `
-        return { success: true };
+        return { success: true, data: res };
     }
     catch (e) {
         console.error(`Error inserting to table reminder_message ` + e);
@@ -24,6 +25,7 @@ export const getRemindersWithinInterval = async () => {
             WHERE triggerDate >= (SELECT CURRENT_TIMESTAMP) 
             AND triggerDate < (SELECT CURRENT_TIMESTAMP) + INTERVAL'30 minute'
         `
+        console.log(`Successfully found ${res.length} reminders.`)
         return { success: true, data: res };
     }
     catch (e) {
