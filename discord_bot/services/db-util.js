@@ -1,6 +1,6 @@
+import { pg_database } from '../constants/constants.js';
 import "dotenv/config";
 import postgres from 'postgres';
-import { pg_database } from '../constants/constants.js';
 
 export const sql = postgres({
         username: process.env.PG_USER,
@@ -24,6 +24,7 @@ export const checkDb = async () => {
             console.log(`Database ${pg_database} connected!`)
     }
     catch (e) {
-        console.error(`Error connecting or creating database: `, e);
+        const url = `postgres://${process.env.PG_USER}:[[hidden_password]]@${process.env.PG_HOST}:${process.env.PG_PORT}/${pg_database}`;
+        console.error(`Error connecting database to database at ${url}:\n` + e);
     }
 };
