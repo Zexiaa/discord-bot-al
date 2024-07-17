@@ -1,5 +1,4 @@
 import { sql } from './db-util.js';
-import { DateTime } from 'luxon';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
     
@@ -9,14 +8,7 @@ export const insertReminder = async (userId, channelId, triggerDate, messageText
             VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
             returning userid, channelid, triggerdate, messagetext
         `
-
-        // TODO Debug this
-        // Change to check minutes
-        // if (DateTime.now() - triggerDate < 30) {
-        //     addReminderTrigger(res.data);
-        // }
-
-        return { success: true };
+        return { success: true, data: res };
     }
     catch (e) {
         console.error(`Error inserting to table reminder_message ` + e);
@@ -33,6 +25,7 @@ export const getRemindersWithinInterval = async () => {
             WHERE triggerDate >= (SELECT CURRENT_TIMESTAMP) 
             AND triggerDate < (SELECT CURRENT_TIMESTAMP) + INTERVAL'30 minute'
         `
+        console.log(`Successfully found ${res.length} reminders.`)
         return { success: true, data: res };
     }
     catch (e) {

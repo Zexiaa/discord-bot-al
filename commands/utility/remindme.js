@@ -48,6 +48,13 @@ export const command = {
 				.setRequired(true)
 				.setMinLength(1)
 				.setMaxLength(2)
+		)
+		.addStringOption(option => 
+			option.setName('timezone')
+				.setDescription('Timezone number e.g. +8')
+				.setRequired(true)
+				.setMinLength(2)
+				.setMaxLength(2)
 		),
 	async execute(interaction) {
 		const message = interaction.options.getString('message');
@@ -56,6 +63,7 @@ export const command = {
 		let year = 0;
 		let hour = 0;
 		let minute = 0;
+		const timezone = interaction.options.getString('timezone');
 
 		// Validation checks
 		try {
@@ -78,15 +86,26 @@ export const command = {
 			await interaction.reply({ content: `Date input (${input}) is incorrect.`, ephemeral: true });
 			return;
 		}
-		
-		const messageTime = DateTime.fromISO(interaction.message.timestamp);
 
-		// Refuse past datetime
-		let inputDate = DateTime.now();
+		// Check timezone validity
 		try {
-			inputDate = DateTime.utc( { day: date, month: month, year: year, hour: hour, minute: minute }, { zone: messageTime.zoneName }); //Jan starts at 0
-			if (inputDate < DateTime.now()) {
-				await interaction.reply({ content: `Date input (${inputDate.toString()}) is in the past.`, ephemeral: true });
+			const botLocalTime = DateTime.local();
+			const rezoneAttempt = botLocalTime.setZone(`UTC${timezone}`);
+		}
+		catch (e) {
+			await interaction.reply("Timezone format is invalid! Please input a '+' or '-' and a number. For example:\n" +
+				codeBlock("+8")
+			);
+			console.error("Invalid timezone format" + e);
+			return;
+		}
+		
+		// Refuse past datetime
+		var inputDate;
+		try {
+			inputDate = DateTime.fromObject( { day: date, month: month, year: year, hour: hour, minute: minute }, { zone: `UTC${timezone}` });
+			if (inputDate.toLocal() < DateTime.local()) {
+				await interaction.reply({ content: `Date input (${inputDate.toLocaleString(DateTime.DATETIME_FULL)}) is in the past.`, ephemeral: true });
 				return;
 			}
 		}
@@ -95,13 +114,14 @@ export const command = {
 			return;
 		}
 
-		const res = await db.insertReminder(interaction.user.id, interaction.channelId, inputDate.toLocal(), message);
+		// Ensure to insert as UTC+0 so it still works in test env
+		const res = await db.insertReminder(interaction.user.id, interaction.channelId, inputDate.setZone("UTC+0"), message);
 		if (res.success) {
-			await interaction.reply(`Roger. I will remind you on ${inputDate.toString()} with the following message:\n${codeBlock(message)}`);
+			await interaction.reply(`Roger. I will remind you on ${inputDate.toLocaleString(DateTime.DATETIME_FULL)} with the following message:\n${codeBlock(message)}`);
 			
-			if (DateTime.now() - inputDate.toLocal() < 30) {
-				schedule.scheduleJob(inputDate.toLocal(), () => {
-					interaction.client.emit(ReminderTrigger, interaction.client, data);
+			if (inputDate.toLocal().diff(DateTime.local(), "minute").as("minute") < 30) {
+				schedule.scheduleJob(inputDate.toLocal().toJSDate(), () => {
+					interaction.client.emit(ReminderTrigger, interaction.client, res.data[0]);
 				});
 			}
 		}
