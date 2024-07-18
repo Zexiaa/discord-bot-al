@@ -12,7 +12,7 @@ export const command = {
       subcommand.setName("create")
         .setDescription("Creates a new live event name list")
         .addStringOption(option => 
-          option.setName("name")
+          option.setName("event_name")
             .setDescription("Name of event")
             .setMaxLength(50)
             .setRequired(true)
@@ -31,18 +31,64 @@ export const command = {
             .setMaxLength(50)
             .setRequired(true)
         )
+    )
+    .addSubcommand(subcommand => 
+      subcommand.setName("addmember")
+        .setDescription("Add a member name into the name list of a provided event")
+        .addStringOption(option =>
+          option.setName("event_name")
+            .setDescription("Name of event")
+            .setMaxLength(50)
+            .setRequired(true)
+        )
+        .addStringOption(option =>
+          option.setName("member_name")
+            .setDescription("Name of member to add")
+            .setMaxLength(50)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(subcommand => 
+      subcommand.setName("removemember")
+        .setDescription("Remove a member name from the name list of a provided event")
+        .addStringOption(option =>
+          option.setName("event_name")
+            .setDescription("Name of event")
+            .setMaxLength(50)
+            .setRequired(true)
+        )
+        .addStringOption(option =>
+          option.setName("member_name")
+            .setDescription("Name of member to add")
+            .setMaxLength(50)
+            .setRequired(true)
+        )
+    )
+    .addSubcommand(subcommand => 
+      subcommand.setName("delete")
+        .setDescription("Delete a live event")
+        .addStringOption(option =>
+          option.setName("event_name")
+            .setDescription("Name of event")
+            .setMaxLength(50)
+            .setRequired(true)
+        )
     ),
 	async execute(interaction) {
     switch (interaction.options.getSubcommand()) {
       case "help":
-        const embed = buildReplyEmbed();
+        const embed = buildHelpEmbed();
         interaction.reply({ embeds: [embed], ephemeral: true })
+        return;
+      case "create":
+        const event = interaction.options.getString("event_name");
+        
         return;
     }
 	},
 }
 
-const buildReplyEmbed = () => {
+const buildHelpEmbed = () => {
   return {
     title: "Event command",
     description: "Command to create and manage events. Each event is essentially an RSVP list to show interest.",
