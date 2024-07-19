@@ -8,7 +8,7 @@ const logFormat = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${label}] ${level}: ${message}`;
 });
 
-const logger = createLogger({
+const dbLogger = createLogger({
   format: combine(
     label({ label: 'db' }),
     timestamp(),
@@ -24,7 +24,7 @@ var db;
 // Create DB and tables
 export const initDb = () => {
     db = new Database(db_directory);
-    logger.info(`Successfully connected to database '${db_directory}'`);
+    dbLogger.info(`Successfully connected to database '${db_directory}'`);
     
     try {
         db.exec(`CREATE TABLE IF NOT EXISTS ${db_reminderTable} (
@@ -42,9 +42,9 @@ export const initDb = () => {
         )`);
     }
     catch (err) {
-        logger.error("Error initialising db!");
+        dbLogger.error("Error initialising db!");
         throw err;
     }
 };
 
-export { db };
+export { db, dbLogger };

@@ -89,7 +89,7 @@ client.once(Events.ClientReady, readyClient => {
 });
 
 db.initDb();
-// StartScheduler(client);
+StartScheduler(client);
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);

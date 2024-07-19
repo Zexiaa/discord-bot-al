@@ -1,36 +1,37 @@
 import { db_reminderTable } from '../../constants/constants.js';
-import { db } from './db-util.js';
+import { db, dbLogger } from './db-util.js';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
     
     try {
-        const res = await db`
-            INSERT INTO ${db_reminderTable}(userid, channelid, triggerdate, messagetext)
-            VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
-            returning userid, channelid, triggerdate, messagetext
-        `
+        const insert = db.prepare(`INSERT INTO ${db_reminderTable}(userid, channelid, triggerdate, messagetext)
+                    VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})`);
+
+        const res = db.transaction(() => {
+            insert.run();
+        })
         return { success: true, data: res };
     }
     catch (e) {
-        console.error(`Error inserting to table reminder_message ` + e);
+        dbLogger.error(`Error inserting to table reminder_message ` + e);
     }
 
     return { success: false };
 }
 
 export const getRemindersWithinInterval = async () => {
-    console.log("Attempting to get reminders in 30 minute bracket...");
+    dbLogger.info("Attempting to get reminders in 30 minute bracket...");
     try {
-       const res = await db`
-            SELECT * FROM al_schema.reminder_message
-            WHERE triggerDate >= (SELECT CURRENT_TIMESTAMP) 
-            AND triggerDate < (SELECT CURRENT_TIMESTAMP) + INTERVAL'30 minute'
-        `
-        console.log(`Successfully found ${res.length} reminders.`)
+        const res = db.prepare(`
+            SELECT * FROM ${db_reminderTable}
+            WHERE triggerdate >= DATETIME('now')
+            AND triggerdate < DATETIME('now', '+30 minutes')
+        `).all();
+        dbLogger.info(`Successfully found ${res.length} reminders.`)
         return { success: true, data: res };
     }
     catch (e) {
-        console.error(`Error retrieving data ` + e);
+        dbLogger.error(`Error retrieving data ` + e);
     }
 
     return { success: false };
