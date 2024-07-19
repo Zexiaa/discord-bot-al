@@ -2,7 +2,7 @@ import { codeBlock, SlashCommandBuilder } from "discord.js";
 import { ReminderTrigger } from "../../constants/constants.js";
 import { DateTime } from "luxon";
 import schedule from 'node-schedule';
-import * as db from '../../services/util-service.js';
+import * as db from '../../services/reminder-service.js';
 
 export const command = {
 	data: new SlashCommandBuilder()

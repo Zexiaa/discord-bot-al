@@ -7,7 +7,7 @@ const startCrawler = async () => {
   });
   const context = await crawler.createBrowserContext();
   const page = await context.newPage();
-  await page.goto('https://wiki.warthunder.com/Main_Page');
+  await page.goto('');
   
   await context.close();
   await crawler.close();

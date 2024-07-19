@@ -1,6 +1,5 @@
 {
-    "name": "discord-bot-al",
-    "version": "0.3.0",
+    "name": "discord-bot-project",
     "description": "Discord app for anime and game data lookup",
     "type": "module",
     "author": "Tan Teck Jun",
