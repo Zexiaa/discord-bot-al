@@ -1,10 +1,11 @@
-import { sql } from './db-util.js';
+import { db_reminderTable } from '../../constants/constants.js';
+import { db } from './db-util.js';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
     
     try {
-        const res = await sql`
-            INSERT INTO al_schema.reminder_message(userid, channelid, triggerdate, messagetext)
+        const res = await db`
+            INSERT INTO ${db_reminderTable}(userid, channelid, triggerdate, messagetext)
             VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
             returning userid, channelid, triggerdate, messagetext
         `
@@ -20,7 +21,7 @@ export const insertReminder = async (userId, channelId, triggerDate, messageText
 export const getRemindersWithinInterval = async () => {
     console.log("Attempting to get reminders in 30 minute bracket...");
     try {
-       const res = await sql`
+       const res = await db`
             SELECT * FROM al_schema.reminder_message
             WHERE triggerDate >= (SELECT CURRENT_TIMESTAMP) 
             AND triggerDate < (SELECT CURRENT_TIMESTAMP) + INTERVAL'30 minute'
@@ -38,7 +39,7 @@ export const getRemindersWithinInterval = async () => {
 export const getReminderById = async (id) => {
     console.log(`Attempting to get reminder by id ${id}`);
     try {
-        const res = await sql`
+        const res = await db`
             SELECT * FROM al_schema.reminder_message
             WHERE id = ${id}
         `
@@ -54,13 +55,13 @@ export const deleteOverdueReminders = async () => {
     console.log("Attempting to delete reminders before current time...");
     try {
         console.log("Checking for any overdue reminders...");
-        const res = await sql`
+        const res = await db`
             SELECT * FROM al_schema.reminder_message
             WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
         `
 
         if (res.length > 0) {
-            await sql`
+            await db`
                 DELETE FROM al_schema.reminder_message
                 WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
             `
@@ -82,12 +83,12 @@ export const deleteReminderById = async (id) => {
     console.log(`Attempting to delete reminder with id ${id}`);
     try {
         console.log(`Checking if reminder exists...`);
-        const res = await sql`
+        const res = await db`
             SELECT * FROM al_schema.reminder_message
             WHERE id = ${id}
         `
         if (res.length > 0) {
-            await sql`
+            await db`
                 DELETE FROM al_schema.reminder_message 
                 WHERE id = ${id}
             `

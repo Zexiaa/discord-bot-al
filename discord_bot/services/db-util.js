@@ -1,30 +1,50 @@
-import { pg_database } from '../constants/constants.js';
-import "dotenv/config";
-import postgres from 'postgres';
+import { createLogger, format, transports } from 'winston';
+import { db_directory, db_eventsTable, db_reminderTable } from '../../constants/constants.js';
+import Database from 'better-sqlite3';
 
-export const sql = postgres({
-        username: process.env.PG_USER,
-        password: process.env.PG_PASSWORD,
-        host: process.env.PG_HOST,
-        port: process.env.PG_PORT,
-        database: pg_database
-    });
+const { combine, timestamp, label, printf } = format;
+
+const logFormat = printf(({ level, message, label, timestamp }) => {
+  return `${timestamp} [${label}] ${level}: ${message}`;
+});
+
+const logger = createLogger({
+  format: combine(
+    label({ label: 'db' }),
+    timestamp(),
+    logFormat
+  ),
+  transports: [
+    new transports.Console()
+  ],
+});
+
+var db;
 
 // Create DB and tables
-export const checkDb = async () => {
-    console.log(`Attempting to connect to DB...`);
+export const initDb = () => {
+    db = new Database(db_directory);
+    logger.info(`Successfully connected to database '${db_directory}'`);
     
     try {
-        const dbExists = await sql`SELECT datname FROM pg_database`;
-        if (!dbExists.some(db => db.datname === pg_database)) {
-            console.error(`Database ${pg_database} missing!`);
-            return;
-        }
-        else 
-            console.log(`Database ${pg_database} connected!`)
+        db.exec(`CREATE TABLE IF NOT EXISTS ${db_reminderTable} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userid TEXT NOT NULL,
+            channelid TEXT NOT NULL,
+            triggerdate TEXT NOT NULL,
+            messagetext VARCHAR(100) NOT NULL
+        )`);
+
+        db.exec(`CREATE TABLE IF NOT EXISTS ${db_eventsTable} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            eventname TEXT NOT NULL,
+            members TEXT
+        )`);
     }
-    catch (e) {
-        const url = `postgres://${process.env.PG_USER}:[[hidden_password]]@${process.env.PG_HOST}:${process.env.PG_PORT}/${pg_database}`;
-        console.error(`Error connecting database to database at ${url}:\n` + e);
+    catch (err) {
+        logger.error("Error initialising db!");
+        throw err;
     }
 };
+
+export { db };
