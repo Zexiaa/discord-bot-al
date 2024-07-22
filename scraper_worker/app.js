@@ -1,3 +1,4 @@
+import { seedList } from "./seed.js";
 import ppt from "puppeteer";
 
 const startCrawler = async () => {
@@ -7,12 +8,14 @@ const startCrawler = async () => {
   });
   const context = await crawler.createBrowserContext();
   const page = await context.newPage();
-  await page.goto('');
+
+  for (const seed of seedList){
+    await page.goto(seed);
+  }
   
   await context.close();
   await crawler.close();
   
 }
-
 
 startCrawler();

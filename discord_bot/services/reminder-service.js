@@ -2,14 +2,13 @@ import { db_reminderTable } from '../../constants/constants.js';
 import { db, dbLogger } from './db-util.js';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
-    
     try {
         const insert = db.prepare(`INSERT INTO ${db_reminderTable}(userid, channelid, triggerdate, messagetext)
                     VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})`);
 
         const res = db.transaction(() => {
             insert.run();
-        })
+        });
         return { success: true, data: res };
     }
     catch (e) {
@@ -38,70 +37,47 @@ export const getRemindersWithinInterval = async () => {
 }
 
 export const getReminderById = async (id) => {
-    console.log(`Attempting to get reminder by id ${id}`);
+    dbLogger.info(`Attempting to get reminder by id ${id}`);
     try {
-        const res = await db`
+        const res = db.prepare(`
             SELECT * FROM al_schema.reminder_message
             WHERE id = ${id}
-        `
+        `).get();
         return { success: true, data: res };
     }
     catch (e) {
-        console.error(`Error retrieving reminder of id ${id} ` + e);
+        dbLogger.error(`Error retrieving reminder of id ${id} ` + e);
     }
     return { success: false };
 }
 
 export const deleteOverdueReminders = async () => {
-    console.log("Attempting to delete reminders before current time...");
     try {
-        console.log("Checking for any overdue reminders...");
-        const res = await db`
-            SELECT * FROM al_schema.reminder_message
-            WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
-        `
+        dbLogger.info("Checking for any overdue reminders...");
+        const res = db.prepare(`
+            SELECT * FROM ${db_reminderTable}
+            WHERE triggerDate < DATETIME('now')
+        `).all();
 
         if (res.length > 0) {
-            await db`
-                DELETE FROM al_schema.reminder_message
+            const del = db.prepare(`
+                DELETE FROM ${db_reminderTable}
                 WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
-            `
-            console.log("Successfully deleted.");
+            `);
+            
+            const deleted = db.transaction(() => {
+                del.run();
+            });
+            
+            dbLogger.info(`Successfully deleted ${deleted.length} reminders.`);
         }
         else {
-            console.log(`No reminders before current time found!`);
+            dbLogger.info(`No reminders before current time found.`);
         }        
         return { success: true };
     }
     catch (e) {
-        console.error(`Error retrieving data ` + e);
-    }
-
-    return { success: false };
-}
-
-export const deleteReminderById = async (id) => {
-    console.log(`Attempting to delete reminder with id ${id}`);
-    try {
-        console.log(`Checking if reminder exists...`);
-        const res = await db`
-            SELECT * FROM al_schema.reminder_message
-            WHERE id = ${id}
-        `
-        if (res.length > 0) {
-            await db`
-                DELETE FROM al_schema.reminder_message 
-                WHERE id = ${id}
-            `
-            console.log(`Reminder successfully deleted.`);
-        }
-        else {
-            console.log(`No reminder of id ${id} found!`);
-        }
-        return { success: true };
-    }
-    catch (e) {
-        console.error(`Error deleting reminder ` + e);
+        dbLogger.error(`Error retrieving data ` + e);
     }
 
     return { success: false };

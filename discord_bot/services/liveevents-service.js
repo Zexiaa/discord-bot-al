@@ -1,14 +1,19 @@
-import { sql } from './db-util.js';
+import { db_eventsTable } from '../../constants/constants.js';
+import { db, dbLogger } from './db-util.js';
 
 export const insertLiveEvent = async (eventName, member) => {
   try {
-    await sql`
-      INSERT INTO al_schema.live_events(eventname, members)
-      VALUES (${eventName}, ${member})`;
+    const insert = db.prepare(`
+      INSERT INTO ${db_eventsTable}(eventname, members)
+      VALUES (${eventName}, ${member})`);
 
+    db.transaction(() => {
+      insert.run();
+    });
     
+    dbLogger.info(`Successfully inserted into ${db_eventsTable}`);
   }
   catch (e) {
-    console.error("Failed to insert into live events " + e)
+    dbLogger.error(`Failed to insert into ${db_eventsTable}` + e);
   }
 }

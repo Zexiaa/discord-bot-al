@@ -1,4 +1,4 @@
-export const db_directory = "./al_database.db"
+export const db_directory = "D:/dev/al_database.db"
 
 // Tables
 export const db_reminderTable = 'reminder_message';
