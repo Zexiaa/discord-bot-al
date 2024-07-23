@@ -1,4 +1,4 @@
-import { db_reminderTable } from '../../constants/constants.js';
+import { db_reminderTable } from '../CONSTANTS/constants.js';
 import { db, dbLogger } from './db-util.js';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {

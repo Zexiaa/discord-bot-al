@@ -1,5 +1,5 @@
 import { codeBlock } from "discord.js";
-import { event_reminderTrigger } from "../../CONSTANTS/constants.js";
+import { event_reminderTrigger } from "../CONSTANTS/constants.js";
 
 export const event = {
     name: event_reminderTrigger,

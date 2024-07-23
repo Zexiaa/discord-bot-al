@@ -1,4 +1,4 @@
-import { db_eventsTable } from '../../constants/constants.js';
+import { db_eventsTable } from '../CONSTANTS/constants.js';
 import { db, dbLogger } from './db-util.js';
 
 export const insertLiveEvent = async (eventName, member) => {

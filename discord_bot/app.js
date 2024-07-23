@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
 import StartScheduler from './job_scheduler.js';
 import * as db from './services/db-util.js';
-import 'dotenv/config';
+import 'dotenv/config.js';
 
 const { combine, timestamp, label, printf } = format;
 const logFormat = printf(({ level, message, label, timestamp }) => {

@@ -1,5 +1,3 @@
-export const db_directory = "D:/dev/al_database.db"
-
 // Tables
 export const db_reminderTable = 'reminder_message';
 export const db_eventsTable = 'live_events';
