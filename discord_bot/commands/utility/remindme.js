@@ -1,5 +1,6 @@
 import { codeBlock, SlashCommandBuilder } from "discord.js";
 import { DateTime } from "luxon";
+import { event_reminderTrigger } from "../../CONSTANTS/constants.js";
 import schedule from 'node-schedule';
 import * as db from '../../services/reminder-service.js';
 

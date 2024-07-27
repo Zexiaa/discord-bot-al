@@ -1,14 +1,13 @@
-import { db_reminderTable } from '../CONSTANTS/constants.js';
 import { db, dbLogger } from './db-util.js';
 
 export const insertReminder = async (userId, channelId, triggerDate, messageText) => {
+    
     try {
-        const insert = db.prepare(`INSERT INTO ${db_reminderTable}(userid, channelid, triggerdate, messagetext)
-                    VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})`);
-
-        const res = db.transaction(() => {
-            insert.run();
-        });
+        const res = await db`
+            INSERT INTO bot_schema.reminder_message(userid, channelid, triggerdate, messagetext)
+            VALUES (${userId}, ${channelId}, ${triggerDate}, ${messageText})
+            returning userid, channelid, triggerdate, messagetext
+        `
         return { success: true, data: res };
     }
     catch (e) {
@@ -21,11 +20,11 @@ export const insertReminder = async (userId, channelId, triggerDate, messageText
 export const getRemindersWithinInterval = async () => {
     dbLogger.info("Attempting to get reminders in 30 minute bracket...");
     try {
-        const res = db.prepare(`
-            SELECT * FROM ${db_reminderTable}
-            WHERE triggerdate >= DATETIME('now')
-            AND triggerdate < DATETIME('now', '+30 minutes')
-        `).all();
+       const res = await db`
+            SELECT * FROM bot_schema.reminder_message
+            WHERE triggerDate >= (SELECT CURRENT_TIMESTAMP) 
+            AND triggerDate < (SELECT CURRENT_TIMESTAMP) + INTERVAL'30 minute'
+        `
         dbLogger.info(`Successfully found ${res.length} reminders.`)
         return { success: true, data: res };
     }
@@ -39,10 +38,10 @@ export const getRemindersWithinInterval = async () => {
 export const getReminderById = async (id) => {
     dbLogger.info(`Attempting to get reminder by id ${id}`);
     try {
-        const res = db.prepare(`
-            SELECT * FROM al_schema.reminder_message
+        const res = await db`
+            SELECT * FROM bot_schema.reminder_message
             WHERE id = ${id}
-        `).get();
+        `
         return { success: true, data: res };
     }
     catch (e) {
@@ -52,32 +51,55 @@ export const getReminderById = async (id) => {
 }
 
 export const deleteOverdueReminders = async () => {
+    dbLogger.info("Attempting to delete reminders before current time...");
     try {
         dbLogger.info("Checking for any overdue reminders...");
-        const res = db.prepare(`
-            SELECT * FROM ${db_reminderTable}
-            WHERE triggerDate < DATETIME('now')
-        `).all();
+        const res = await db`
+            SELECT * FROM bot_schema.reminder_message
+            WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
+        `
 
         if (res.length > 0) {
-            const del = db.prepare(`
-                DELETE FROM ${db_reminderTable}
+            await db`
+                DELETE FROM bot_schema.reminder_message
                 WHERE triggerDate < (SELECT CURRENT_TIMESTAMP)
-            `);
-            
-            const deleted = db.transaction(() => {
-                del.run();
-            });
-            
-            dbLogger.info(`Successfully deleted ${deleted.length} reminders.`);
+            `
+            dbLogger.info("Successfully deleted.");
         }
         else {
-            dbLogger.info(`No reminders before current time found.`);
+            dbLogger.info(`No reminders before current time found!`);
         }        
         return { success: true };
     }
     catch (e) {
         dbLogger.error(`Error retrieving data ` + e);
+    }
+
+    return { success: false };
+}
+
+export const deleteReminderById = async (id) => {
+    dbLogger.info(`Attempting to delete reminder with id ${id}`);
+    try {
+        dbLogger.info(`Checking if reminder exists...`);
+        const res = await db`
+            SELECT * FROM bot_schema.reminder_message
+            WHERE id = ${id}
+        `
+        if (res.length > 0) {
+            await db`
+                DELETE FROM bot_schema.reminder_message 
+                WHERE id = ${id}
+            `
+            dbLogger.info(`Reminder successfully deleted.`);
+        }
+        else {
+            dbLogger.info(`No reminder of id ${id} found!`);
+        }
+        return { success: true };
+    }
+    catch (e) {
+        dbLogger.error(`Error deleting reminder ` + e);
     }
 
     return { success: false };

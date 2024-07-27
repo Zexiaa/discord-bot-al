@@ -1,17 +1,13 @@
 import { createLogger, format, transports } from 'winston';
-import { db_eventsTable, db_reminderTable } from '../CONSTANTS/constants.js';
-import * as path from 'path';
-import * as fs from "fs";
-import Database from 'better-sqlite3';
+import postgres from 'postgres';
 
-const __dirname = import.meta.dirname;
 const { combine, timestamp, label, printf } = format;
 
 const logFormat = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${label}] ${level}: ${message}`;
 });
 
-const dbLogger = createLogger({
+export const dbLogger = createLogger({
   format: combine(
     label({ label: 'db' }),
     timestamp(),
@@ -22,42 +18,34 @@ const dbLogger = createLogger({
   ],
 });
 
-var db;
+const pg_database = 'al_database';
+
+export const db = postgres({
+  username: process.env.PG_USER,
+  password: process.env.PG_PASSWORD,
+  host: process.env.PG_HOST,
+  port: process.env.PG_PORT,
+  database: pg_database
+});
 
 // Create DB and tables
-export const initDb = () => {
-  const root = path.dirname(path.dirname(__dirname));
-  const dbPath = path.join(root, "db");
+export const initDb = async () => {
 
-  dbLogger.info(`Checking folder ${dbPath}`);
-  if (!fs.existsSync(dbPath)) {
-    fs.mkdirSync(dbPath);
-  }
-
-  dbLogger.info(`Connecting to database: '${process.env.SQLITE_DB}'`);
-  db = new Database(path.join(dbPath, process.env.SQLITE_DB));
+  dbLogger.info(`Connecting to database: '${pg_database}'`);
 
   try {
-    db.exec(`CREATE TABLE IF NOT EXISTS ${db_reminderTable} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userid TEXT NOT NULL,
-            channelid TEXT NOT NULL,
-            triggerdate TEXT NOT NULL,
-            messagetext VARCHAR(100) NOT NULL
-        )`);
+    const dbExists = await db`SELECT datname FROM pg_database`;
+    if (!dbExists.some(db => db.datname === pg_database)) {
+      dbLogger.error(`Database ${pg_database} missing!`);
+      return;
+    }
+    else 
+      dbLogger.info(`Database ${pg_database} connected!`)
 
-    db.exec(`CREATE TABLE IF NOT EXISTS ${db_eventsTable} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            eventname TEXT NOT NULL,
-            members TEXT
-        )`);
+    await db`CREATE SCHEMA IF NOT EXISTS bot_schema AUTHORIZATION albot`;
   }
-  catch (err) {
-    dbLogger.error("Error initialising db!");
-    throw err;
+  catch (e) {
+    const url = `postgres://${process.env.PG_USER}:[[hidden_password]]@${process.env.PG_HOST}:${process.env.PG_PORT}/${pg_database}`;
+    dbLogger.error(`Error connecting database to database at ${url}:\n` + e);
   }
-
-  dbLogger.info("Successfully connected to db.");
 };
-
-export { db, dbLogger };

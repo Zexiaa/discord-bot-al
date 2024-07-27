@@ -1,6 +1,7 @@
 import { ToadScheduler, SimpleIntervalJob, Task } from 'toad-scheduler';
 import { deleteOverdueReminders, getRemindersWithinInterval } from "./services/reminder-service.js";
 import { DateTime } from 'luxon';
+import { event_reminderTrigger } from './CONSTANTS/constants.js';
 import schedule from 'node-schedule';
 
 var currentClient;
