@@ -1,8 +1,8 @@
 import { codeBlock, SlashCommandBuilder } from "discord.js";
-import { ReminderTrigger } from "../../constants/constants.js";
 import { DateTime } from "luxon";
+import { event_reminderTrigger } from "../../CONSTANTS/constants.js";
 import schedule from 'node-schedule';
-import * as db from '../../services/util-service.js';
+import * as db from '../../services/reminder-service.js';
 
 export const command = {
 	data: new SlashCommandBuilder()
@@ -121,7 +121,7 @@ export const command = {
 			
 			if (inputDate.toLocal().diff(DateTime.local(), "minute").as("minute") < 30) {
 				schedule.scheduleJob(inputDate.toLocal().toJSDate(), () => {
-					interaction.client.emit(ReminderTrigger, interaction.client, res.data[0]);
+					interaction.client.emit(event_reminderTrigger, interaction.client, res.data[0]);
 				});
 			}
 		}

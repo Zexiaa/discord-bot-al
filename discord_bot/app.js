@@ -7,9 +7,26 @@ import {
 import { readdirSync } from "fs";
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createLogger, format, transports } from 'winston';
 import StartScheduler from './job_scheduler.js';
 import * as db from './services/db-util.js';
-import 'dotenv/config';
+import 'dotenv/config.js';
+
+const { combine, timestamp, label, printf } = format;
+const logFormat = printf(({ level, message, label, timestamp }) => {
+  return `${timestamp} [${label}] ${level}: ${message}`;
+});
+
+const logger = createLogger({
+  format: combine(
+    label({ label: 'bot' }),
+    timestamp(),
+    logFormat
+  ),
+  transports: [
+    new transports.Console()
+  ],
+});
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages] });
 
@@ -28,17 +45,17 @@ readdirSync(commandsRoot).forEach(category => {
 });
 
 try {
-	console.log(`Attempting to register command modules...`)
+	logger.info(`Attempting to register command modules...`);
 	for (const file of commandFiles) {
 		const { command } = await import(file);
 		if ('data' in command && 'execute' in command) {
 			client.commands.set(command.data.name, command);
 		}
 	}
-	console.log(`Successfully registered (${commandFiles.length}) commands`)
+	logger.info(`Successfully registered (${commandFiles.length}) commands`);
 }
 catch (e) {
-	console.error(e);
+	logger.error(e);
 }
 
 // Read all events
@@ -50,7 +67,7 @@ readdirSync(eventsRoot).forEach(file => {
 });
 
 try {
-	console.log(`Attempting to register event modules...`);
+	logger.info(`Attempting to register event modules...`);
 	for (const file of eventFiles) {
 		const { event } = await import(file);
 		if (event.once)
@@ -58,20 +75,20 @@ try {
 		else
 			client.on(event.name, (...args) => event.execute(...args));
 	}
-	console.log(`Successfully registered (${eventFiles.length}) events`);
+	logger.info(`Successfully registered (${eventFiles.length}) events`);
 }
 catch (e) {
-	console.error(e);
+	logger.error(e);
 }
 
 // When the client is ready, run this code (only once).
 // The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
 // It makes some properties non-nullable.
 client.once(Events.ClientReady, readyClient => {
-	console.log(`${readyClient.user.tag} System Online.`);
+	logger.info(`${readyClient.user.tag} System Online.`);
 });
 
-db.checkDb();
+db.initDb();
 StartScheduler(client);
 
 // Log in to Discord with your client's token

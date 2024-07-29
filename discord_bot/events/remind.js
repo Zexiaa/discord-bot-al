@@ -1,8 +1,8 @@
 import { codeBlock } from "discord.js";
-import { ReminderTrigger } from "../constants/constants.js";
+import { event_reminderTrigger } from "../CONSTANTS/constants.js";
 
 export const event = {
-    name: ReminderTrigger,
+    name: event_reminderTrigger,
     once: false,
     async execute(client, reminder) {
       client.channels.fetch(reminder.channelid).then(channel => {

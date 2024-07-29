@@ -1,0 +1,10 @@
+services:
+  discord-bot:
+    build: ./discord_bot
+    image: discord-bot-al:0.2.3
+    platform: linux/arm64
+    ports:
+      - "3000:3000"
+    env_file: "/discord_bot/.env"
+    # volumes:
+    #   - ./db/al-database.db:/db/al-database.db

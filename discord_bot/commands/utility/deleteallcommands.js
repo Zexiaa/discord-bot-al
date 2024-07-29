@@ -6,8 +6,10 @@ export const command = {
 		.setDescription('Deletes all the commands registered in this guild'),
 	async execute(interaction) {
 
-        if (interaction.user.id !== process.env.DISCORD_OWNER_ID)
+        if (interaction.user.id !== process.env.DISCORD_OWNER_ID) {
             await interaction.reply("Unauthorised access to command.");
+            return;
+        }
 
         try {
             const rest = new REST().setToken(process.env.DISCORD_TOKEN);

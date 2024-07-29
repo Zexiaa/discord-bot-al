@@ -1,7 +1,7 @@
 import { ToadScheduler, SimpleIntervalJob, Task } from 'toad-scheduler';
-import { deleteOverdueReminders, deleteReminderById, getRemindersWithinInterval } from "./services/util-service.js";
-import { ReminderTrigger } from './constants/constants.js';
+import { deleteOverdueReminders, getRemindersWithinInterval } from "./services/reminder-service.js";
 import { DateTime } from 'luxon';
+import { event_reminderTrigger } from './CONSTANTS/constants.js';
 import schedule from 'node-schedule';
 
 var currentClient;
@@ -23,7 +23,6 @@ export default function StartScheduler(client) {
 
 const checkReminders = async () => {
   await deleteOverdueReminders();
-
   // await schedule.gracefulShutdown();
 
   const res = await getRemindersWithinInterval(); 
@@ -33,7 +32,7 @@ const checkReminders = async () => {
   res.data.forEach(data => {
     const jsDate = new Date(data.triggerdate);
     schedule.scheduleJob(DateTime.fromISO(jsDate.toISOString()).toLocal().toJSDate(), () => {
-      currentClient.emit(ReminderTrigger, currentClient, data);
+      currentClient.emit(event_reminderTrigger, currentClient, data);
     });
   });
 }
