@@ -1,4 +1,5 @@
 import { blockQuote, SlashCommandBuilder } from "discord.js";
+import * as db from "../../services/liveevents-service.js"
 
 export const command = {
 	data: new SlashCommandBuilder()
@@ -82,7 +83,13 @@ export const command = {
         return;
       case "create":
         const event = interaction.options.getString("event_name");
-        
+        const res = await db.insertLiveEvent(interaction.channelId, event, )
+        if (res.success) {
+          interaction.reply({ content: `Roger. Event ${event} created.` });
+        }
+        else {
+          interaction.reply({ content: `Error encountered.`, ephemeral: true });
+        }
         return;
     }
 	},
