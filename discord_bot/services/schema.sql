@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS bot_schema.reminder_message (
 
 CREATE TABLE IF NOT EXISTS bot_schema.live_events (
     id SERIAL PRIMARY KEY,
+    channelid TEXT NOT NULL,
     eventname TEXT NOT NULL,
     members TEXT
 )

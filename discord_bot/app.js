@@ -88,7 +88,7 @@ client.once(Events.ClientReady, readyClient => {
 	logger.info(`${readyClient.user.tag} System Online.`);
 });
 
-db.initDb();
+await db.initDb();
 StartScheduler(client);
 
 // Log in to Discord with your client's token

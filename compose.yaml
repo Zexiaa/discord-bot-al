@@ -6,5 +6,3 @@ services:
     ports:
       - "3000:3000"
     env_file: "/discord_bot/.env"
-    # volumes:
-    #   - ./db/al-database.db:/db/al-database.db
