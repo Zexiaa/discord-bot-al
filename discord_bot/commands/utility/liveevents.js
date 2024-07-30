@@ -130,7 +130,13 @@ export const command = {
         event = interaction.options.getString("event_name");
         res = await db.getAllMembersFromEvent(interaction.channelId, event);
         if (res.success) {
-          const memberList = res.data[0].members.split(",").join("\n");
+          const memberList = res.data[0].members;
+          if (memberList == null) {
+            interaction.reply({ content: `There are not yet any members in event '${event}'`, ephemeral: true });
+            return;
+          }
+
+          memberList = memberList.split(",").join("\n");
           interaction.reply({ content: `Here are the members in event '${event}'\n` + codeBlock(memberList) });
         }
         else {
