@@ -82,8 +82,25 @@ export const command = {
 
     switch (interaction.options.getSubcommand()) {
       case "help":
-        const embed = buildHelpEmbed();
-        interaction.reply({ embeds: [embed], ephemeral: true })
+        const message = codeBlock(
+          `Event command\n` + 
+          `This command lets you manage and create name lists for live events.\n\n` +
+          `Usage: /event [subcommand] [arguments]\n\n` +
+          `Available subcommands:\n\n` +
+          `create [event name]\n` +
+          `\tCreates a new event with an empty name list\n\n` +
+          `list\n` + 
+          `\tLists all events added in this channel\n\n` +
+          `names [event name]\n` +
+          `\tLists the names of the attendees in the given event\n\n` +
+          `addmember [event name] [member name]\n` +
+          `\tAdds the name of the member into the corresponding event\n\n` +
+          `removemember [event name] [member name]\n` +
+          `\tRemoves the name of a member from the given event\n\n` +
+          `delete [event name]\n` +
+          `\tRemoves the event from the list`
+        );
+        interaction.reply({ content: message, ephemeral: true })
         return;
 
       case "create":
@@ -160,48 +177,4 @@ export const command = {
         return;
     }
 	},
-}
-
-const buildHelpEmbed = () => {
-  return {
-    title: "Event command",
-    description: "Command to create and manage events. Each event is essentially an RSVP list to show interest.",
-    fields: [
-      {
-        name: "Usage",
-        value: "/event [FLAG] [params]",
-        inline: false              
-      },
-      {
-        name: "Available flags",
-        value: "HELP, CREATE, LIST, ADDMEMBER, REMOVE, DELETE",
-        inline: false
-      },
-      {
-        name: "CREATE [name]",
-        value: "Create a new live event with input name",
-        inline: false
-      },
-      {
-        name: "LIST",
-        value: "Lists all live events",
-        inline: false
-      },
-      {
-        name: "ADDMEMBER [event_name] [member_name]",
-        value: "Adds the name of a member into the name list of the input event",
-        inline: false
-      },
-      {
-        name: "REMOVE [event_name] [member_name]",
-        value: "Removes the name of a member from the name list of the input event",
-        inline: false
-      },
-      {
-        name: "DELETE [event_name]",
-        value: "Removes the event name list",
-        inline: false
-      }
-    ],
-  };
 }
