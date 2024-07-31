@@ -1,6 +1,8 @@
 import { seedList, domainList } from "./constants.js";
 import { createLogger, format, transports } from 'winston';
-import ppt from "puppeteer";
+import { disconnectDb, initDb } from "./services/db-util.js";
+import * as db from "./services/wtwiki-service.js";
+import * as cheerio from "cheerio";
 
 const { combine, timestamp, label, printf } = format;
 const logFormat = printf(({ level, message, label, timestamp }) => {
@@ -22,62 +24,102 @@ const startWarthunderCrawler = async () => {
 
   let queue = seedList;
   
-  const crawler = await ppt.launch({
-    headless: true
-  });
-  const context = await crawler.createBrowserContext();
-  const page = await context.newPage();
-
-  logger.info("Scraper worker started.");
-
   let index = 0;
   while (index < queue.length) {
-    const next = queue[index];
-    await page.goto(next, {timeout: 0, waitUntil: 'domcontentloaded'});
+    const page = queue[index];
+    const urlRoot = page.replace('https://', '').split('/')[0];
 
-    // Extract vehicle details
-    const isVehicle = await page.$$eval('div', divs => divs.find(html => html.className === "general_info_br"));
-    try {
-      if (isVehicle) {
-        const data = await page.evaluate(() => {
-          let brTable = Array.from(document.querySelectorAll('table'));
-          
+    await fetch(page)
+      .then(res => res.text())
+      .then(html => {
+        const $ = cheerio.load(html);
 
-          return {
-            title: document.querySelector('.general_info_name').textContent,
-            nationFlag: document.querySelector('.general_info_nation').querySelector('img').src,
-            rank: document.querySelector('.general_info_rank').textContent,
-            br: brTable//{
-            //   ab: 
-            // }
-          } 
-        });
-        console.log(data)
-      }
-    }
-    catch (e) {
-      logger.error(`Error encountered while extracting vehicle details in ${next}\n` + e);
-    } 
+        const isVehicle = $("div.general_info_br").length > 0;
+        if (isVehicle) {
+          const details = extractVehicleStats(urlRoot, $);
+          details.wikiLink = page;
+          db.insertVehicleData(page, details);
+        }
 
-    // Add pages and proceed to next
-    const anchors = await page.$$eval('a', anchors => anchors.map(link => link.href));
-    anchors.forEach(url => {
-      let domain = "";
+        // Queue links
+        $("a").each((i, e) => {
+          const url = $(e).attr("href");
+          let domain = "";
+          if (url != null && url.includes('https://')) {
+            domain = url.replace('https://', '').split('/')[0];
+          }
 
-      if (url.includes('https://')) {
-        domain = url.replace('https://', '').split('/')[0];
-      }
+          // if (domainList.includes(domain)) {
+          //   queue.push(url);
+          // }
+        })
+      });
 
-      // if (domainList.includes(domain)) {
-      //   queue.push(url);
-      // }
-    })
     index++;
-    sleep(1000);
+    // sleep(1000);
   }
+
+  logger.info("Scraping completed");
+}
+
+const extractVehicleStats = (urlRoot, $) => {
+  // Look for BR table
+  var table;
+  $("table").each((i, e) => {
+    $(e).find("a").each((j, innerel) => {
+      if ($(innerel).attr("title") != null &&
+      $(innerel).attr("title").includes("Battles")) {
+        table = e;
+      }
+    })
+  })
   
-  await context.close();
-  await crawler.close();
+  // Extract each row as an array
+  const brArr = [...$(table).find("tr")].map(e => 
+    [...$(e).find("td")].map(e => $(e).text())
+  );
+
+  // Convert into key-value pair
+  let brTable = {};
+  brArr[0].forEach((key, index) => {
+    brTable[key] = brArr[1][index] 
+  })
+
+  let classes = [];
+  $(".general_info_class a").each((i, e) => {
+    classes.push($(e).text())
+  })
+
+  let prices = [];
+  $(".general_info_price div").each((i, e) => {
+    prices.push($(e).text().trim());
+  });
+
+  let priceIcons = {};
+  $(".general_info_price a").each((i, e) => {
+    priceIcons[$(e).attr("title")] = urlRoot + $(e).find("img").first().attr("src");
+  });
+
+  let description = "";
+  $("h2 span").each((i, e) => {
+    if($(e).text().includes("Description")) {
+      description = $(e).parent().next().text().trim();
+    }
+  })
+
+  const details = {
+    title: $('.general_info_name').first().text().trim(),
+    nation: $('.general_info_nation').first().text().trim(),
+    nationFlagUrl: urlRoot + $('div.general_info_nation img').first().attr("src"),
+    rank: $('.general_info_rank').text().trim(),
+    br: brTable,
+    vehicleClass: classes,
+    prices: Object.fromEntries(prices.map(p => p.split(":"))),
+    priceIcons: priceIcons,
+    desc: description
+  }
+
+  return details;
 }
 
 const sleep = (waitForMs) => {
@@ -89,4 +131,6 @@ const sleep = (waitForMs) => {
   }
 }
 
-startWarthunderCrawler();
+initDb()
+  .then(startWarthunderCrawler)
+  .then(disconnectDb)

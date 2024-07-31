@@ -7,8 +7,10 @@
   "author": "Tan Teck Jun",
   "license": "MIT",
   "dependencies": {
-      "puppeteer": "^22.12.1",
-      "winston": "^3.13.1"
+      "winston": "^3.13.1",
+      "cheerio": "^1.0.0-rc.12",
+      "postgres": "^3.4.4",
+      "dotenv": "^16.4.5"
   },
   "scripts": {
       "start": "node app.js",

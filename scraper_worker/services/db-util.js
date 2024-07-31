@@ -39,21 +39,11 @@ export const initDb = async () => {
 
     await db.begin(async db => {
       await db`
-        CREATE TABLE IF NOT EXISTS bot_schema.reminder_message (
-        id SERIAL PRIMARY KEY,
-        userid TEXT NOT NULL,
-        channelid TEXT NOT NULL,
-        triggerDate TIMESTAMPTZ NOT NULL,
-        messagetext CHARACTER VARYING(100) NOT NULL
-      )`
-
-      await db`
-        CREATE TABLE IF NOT EXISTS bot_schema.live_events (
-        id SERIAL PRIMARY KEY,
-        channelid TEXT NOT NULL,
-        eventname TEXT NOT NULL,
-        members TEXT
-      )`
+        CREATE TABLE IF NOT EXISTS wtwiki_schema.vehicle (
+          id SERIAL PRIMARY KEY,
+          page TEXT NOT NULL,
+          data JSONB NOT NULL
+        )`
     });
   }
   catch (e) {
@@ -61,3 +51,7 @@ export const initDb = async () => {
     dbLogger.error(`Error connecting database to database at ${url}:\n` + e);
   }
 };
+
+export const disconnectDb = async () => {
+  await db.end({ timeout: 5 });
+}
