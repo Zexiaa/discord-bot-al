@@ -41,7 +41,7 @@ export const initDb = async () => {
       await db`
         CREATE TABLE IF NOT EXISTS wtwiki_schema.vehicle (
           id SERIAL PRIMARY KEY,
-          page TEXT NOT NULL,
+          name TEXT NOT NULL,
           data JSONB NOT NULL
         )`
     });

@@ -1,10 +1,11 @@
 import { db, dbLogger } from "./db-util.js";
 
-export const insertVehicleData = async (page, jsonData) => {
+export const insertVehicleData = async (jsonData) => {
   try {
-    db`
-      INSERT INTO wtwiki_schema.vehicle(page, data)
-      VALUES (${page}, ${jsonData})`
+    await db`
+      INSERT INTO wtwiki_schema.vehicle(name, data)
+      VALUES (${jsonData.title}, ${jsonData})
+      `
 
     return { success: true };
   }

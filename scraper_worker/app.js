@@ -38,7 +38,7 @@ const startWarthunderCrawler = async () => {
         if (isVehicle) {
           const details = extractVehicleStats(urlRoot, $);
           details.wikiLink = page;
-          db.insertVehicleData(page, details);
+          db.insertVehicleData(details);
         }
 
         // Queue links
@@ -59,7 +59,7 @@ const startWarthunderCrawler = async () => {
     // sleep(1000);
   }
 
-  logger.info("Scraping completed");
+  logger.info("Scraping completed. Exiting.");
 }
 
 const extractVehicleStats = (urlRoot, $) => {
