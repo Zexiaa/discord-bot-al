@@ -10,7 +10,8 @@
       "winston": "^3.13.1",
       "cheerio": "^1.0.0-rc.12",
       "postgres": "^3.4.4",
-      "dotenv": "^16.4.5"
+      "dotenv": "^16.4.5",
+      "luxon": "^3.4.4"
   },
   "scripts": {
       "start": "node app.js",

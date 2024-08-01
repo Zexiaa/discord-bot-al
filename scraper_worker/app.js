@@ -1,6 +1,7 @@
 import { seedList, domainList } from "./constants.js";
 import { createLogger, format, transports } from 'winston';
 import { disconnectDb, initDb } from "./services/db-util.js";
+import { DateTime } from "luxon";
 import * as db from "./services/wtwiki-service.js";
 import * as cheerio from "cheerio";
 
@@ -22,43 +23,61 @@ const logger = createLogger({
 
 const startWarthunderCrawler = async () => {
 
+  // TODO: Check for collisions
   let queue = seedList;
-  
   let index = 0;
   while (index < queue.length) {
     const page = queue[index];
     const urlRoot = 'https://' + page.replace('https://', '').split('/')[0];
 
-    var details;
-    await fetch(page)
-      .then(res => res.text())
-      .then(html => {
-        const $ = cheerio.load(html);
+    const html = await fetch(page).then(res => res.text());
+    const $ = cheerio.load(html);
+    
+    const updateMsg = $("li[id='footer--lastmod']").first().text();
+    const date = updateMsg.split(",")[0].split("on")[1].trim();
+    const time = updateMsg.split(",")[1].replace('at', '').replace('.', '').trim();
+    const updatedDate = DateTime.fromFormat(`${date} ${time}`, "d MMMM yyyy H:mm", { zone: "utc" });
 
-        const isVehicle = $("div.general_info_br").length > 0;
-        if (isVehicle) {
-          details = extractVehicleStats(urlRoot, $);
-          details.wikiLink = page;
-        }
-
-        // Queue links
-        $("a").each((i, e) => {
-          const url = $(e).attr("href");
-          let domain = "";
-          if (url != null && url.includes('https://')) {
-            domain = url.replace('https://', '').split('/')[0];
-          }
-
-          // if (domainList.includes(domain)) {
-          //   queue.push(url);
-          // }
-        })
-      });
-
-    if (details != null) {
-      await db.insertVehicleData(details);
-      details = undefined; //clear buffer
+    let isPageChanged = true;
+    const res = await db.getLastPageUpdate(page);    
+    if (!res.success) {
+      await db.insertPageLog(page, updatedDate);
     }
+    else {
+      const dataDateString = new Date(res.data).toISOString();
+      const lastUpdated = DateTime.fromISO(dataDateString);
+
+      if (updatedDate > lastUpdated) {
+        await db.updatePageLog(page, updatedDate);
+      }
+      else {
+        // Page has not changed don't crawl
+        isPageChanged = false;
+      }
+    }
+
+    // Extract details
+    if (isPageChanged) {
+      const isVehicle = $("div.general_info_br").length > 0;
+      if (isVehicle) {
+        const details = extractVehicleStats(urlRoot, $);
+        details.wikiLink = page;
+        await db.insertVehicleData(details);
+      }
+    }
+
+    // Queue links
+    $("a").each((i, e) => {
+      const url = $(e).attr("href");
+      let domain = "";
+      if (url != null && url.includes('https://')) {
+        domain = url.replace('https://', '').split('/')[0];
+      }
+
+      // if (domainList.includes(domain)) {
+      //   queue.push(url);
+      // }
+    })
 
     index++;
     // sleep(1000);

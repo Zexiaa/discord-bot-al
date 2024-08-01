@@ -45,6 +45,14 @@ export const initDb = async () => {
           data JSONB NOT NULL
         )`
     });
+
+    await db.begin(async db => {
+      await db`
+        CREATE TABLE IF NOT EXISTS wtwiki_schema.visited_page_log (
+          url TEXT PRIMARY KEY,
+          datemodified TIMESTAMP NOT NULL
+        )`
+    });
   }
   catch (e) {
     const url = `postgres://${process.env.PG_USER}:[[hidden_password]]@${process.env.PG_HOST}:${process.env.PG_PORT}/${pg_database}`;

@@ -38,3 +38,54 @@ export const insertVehicleData = async (jsonData) => {
 
   return { success: false };
 }
+
+export const getLastPageUpdate = async (url) => {
+  try {
+    const res = await db`
+      SELECT datemodified
+      FROM wtwiki_schema.visited_page_log
+      WHERE url=${url}
+      `
+
+    if (res.length > 0)
+      return { success: true, data: res[0].datemodified }
+  }
+  catch (e) {
+    dbLogger.error(e);
+  }
+
+  return { success: false }
+}
+
+export const insertPageLog = async (url, dateModified) => {
+  try {
+    await db`
+      INSERT INTO wtwiki_schema.visited_page_log(url, datemodified)
+      VALUES (${url}, ${dateModified})
+      `
+
+    return { success: true }
+  }
+  catch (e) {
+    dbLogger.error(e);
+  }
+
+  return { success: false }
+}
+
+export const updatePageLog = async (url, dateModified) => {
+  try {
+    await db`
+      UPDATE wtwiki_schema.visited_page_log(url, datemodified)
+      SET datemodified=${dateModified}
+      WHERE url=${url}
+      `
+
+    return { success: true }
+  }
+  catch (e) {
+    dbLogger.error(e);
+  }
+
+  return { success: false }
+}
