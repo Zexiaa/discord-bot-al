@@ -5,13 +5,13 @@ import { sha1 } from "js-sha1";
 export const insertVehicleData = async (jsonData) => {
   try {
     const res = await db`
-      SELECT id
+      SELECT contenthash
       FROM wtwiki_schema.vehicle
       WHERE name=${jsonData.title}
       `
 
     const contentHash = sha1(JSON.stringify(jsonData));
-
+    console.log(res[0].contenthash)
     let count = 0;
     // Insert if new
     if (res.length < 1) {
@@ -22,13 +22,15 @@ export const insertVehicleData = async (jsonData) => {
       count = insert.length;
     }
     else {
-      // Update
-      const update = await db`
-        UPDATE wtwiki_schema.vehicle
-        SET data=${jsonData}, contenthash=${contentHash}
-        WHERE name=${jsonData.title}`
-
-      count = update.length;
+      if (res[0].contenthash != contentHash) {
+        // Update
+        const update = await db`
+          UPDATE wtwiki_schema.vehicle
+          SET data=${jsonData}, contenthash=${contentHash}
+          WHERE name=${jsonData.title}`
+  
+        count = update.length;
+      }
     }
 
     if (count < 1)
