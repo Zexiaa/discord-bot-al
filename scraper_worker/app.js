@@ -100,19 +100,19 @@ const extractVehicleStats = (urlRoot, $) => {
     priceIcons[$(e).attr("title")] = urlRoot + $(e).find("img").first().attr("src");
   });
 
+  const descElem = $("h2 span[id=Description]").first().parent().next();
   let description = "";
-  $("h2 span").each((i, e) => {
-    if($(e).text().includes("Description")) {
-      description = $(e).parent().next().text().trim();
-    }
-  })
+  if (descElem != null && $(descElem).has("p")) {
+    description = $(descElem).text();
+  }
 
   const details = {
     title: $('.general_info_name').first().text().trim(),
+    hangarImgUrl: $(".specs_card_main_slider_system img[width=800]").first().attr("src"),
     nation: $('.general_info_nation').first().text().trim(),
     nationFlagUrl: urlRoot + $('div.general_info_nation img').first().attr("src"),
     rank: $('.general_info_rank').text().trim(),
-    br: brTable,
+    brTable: brTable,
     vehicleClass: classes,
     prices: Object.fromEntries(prices.map(p => p.split(":"))),
     priceIcons: priceIcons,
