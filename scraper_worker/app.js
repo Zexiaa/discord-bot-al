@@ -27,8 +27,9 @@ const startWarthunderCrawler = async () => {
   let index = 0;
   while (index < queue.length) {
     const page = queue[index];
-    const urlRoot = page.replace('https://', '').split('/')[0];
+    const urlRoot = 'https://' + page.replace('https://', '').split('/')[0];
 
+    var details;
     await fetch(page)
       .then(res => res.text())
       .then(html => {
@@ -36,9 +37,8 @@ const startWarthunderCrawler = async () => {
 
         const isVehicle = $("div.general_info_br").length > 0;
         if (isVehicle) {
-          const details = extractVehicleStats(urlRoot, $);
+          details = extractVehicleStats(urlRoot, $);
           details.wikiLink = page;
-          db.insertVehicleData(details);
         }
 
         // Queue links
@@ -54,6 +54,11 @@ const startWarthunderCrawler = async () => {
           // }
         })
       });
+
+    if (details != null) {
+      await db.insertVehicleData(details);
+      details = undefined; //clear buffer
+    }
 
     index++;
     // sleep(1000);
@@ -108,7 +113,7 @@ const extractVehicleStats = (urlRoot, $) => {
 
   const details = {
     title: $('.general_info_name').first().text().trim(),
-    hangarImgUrl: $(".specs_card_main_slider_system img[width=800]").first().attr("src"),
+    hangarImgUrl: urlRoot + $(".specs_card_main_slider_system img[width=800]").first().attr("src"),
     nation: $('.general_info_nation').first().text().trim(),
     nationFlagUrl: urlRoot + $('div.general_info_nation img').first().attr("src"),
     rank: $('.general_info_rank').text().trim(),
@@ -116,7 +121,7 @@ const extractVehicleStats = (urlRoot, $) => {
     vehicleClass: classes,
     prices: Object.fromEntries(prices.map(p => p.split(":"))),
     priceIcons: priceIcons,
-    desc: description
+    description: description
   }
 
   return details;
@@ -133,4 +138,4 @@ const sleep = (waitForMs) => {
 
 initDb()
   .then(startWarthunderCrawler)
-  .then(disconnectDb)
+  .finally(disconnectDb)
