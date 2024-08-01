@@ -26,20 +26,28 @@ const startWarthunderCrawler = async () => {
   // TODO: Check for collisions
   let queue = seedList;
   let index = 0;
+  let progress = [];
   while (index < queue.length) {
     const page = queue[index];
     const urlRoot = 'https://' + page.replace('https://', '').split('/')[0];
 
     const html = await fetch(page).then(res => res.text());
     const $ = cheerio.load(html);
-    
-    const updateMsg = $("li[id='footer--lastmod']").first().text();
-    const date = updateMsg.split(",")[0].split("on")[1].trim();
-    const time = updateMsg.split(",")[1].replace('at', '').replace('.', '').trim();
-    const updatedDate = DateTime.fromFormat(`${date} ${time}`, "d MMMM yyyy H:mm", { zone: "utc" });
+
+    let updatedDate = DateTime.local();
+    let updateMsg = '';
+    try {
+      updateMsg = $("li[id='footer--lastmod']").first().text();
+      const date = updateMsg.split(",")[0].split("on")[1];
+      const time = updateMsg.split(",")[1].replace('at', '').replace('.', '').trim();
+      updatedDate = DateTime.fromFormat(`${date} ${time}`, "d MMMM yyyy H:mm", { zone: "utc" });
+    }
+    catch (e) {
+      logger.error(`Invalid datetime extracted from '${page}'\nFrom string '${updateMsg}'\n` + e)
+    }
 
     let isPageChanged = true;
-    const res = await db.getLastPageUpdate(page);    
+    const res = await db.getLastPageUpdate(page);
     if (!res.success) {
       await db.insertPageLog(page, updatedDate);
     }
@@ -63,24 +71,42 @@ const startWarthunderCrawler = async () => {
         const details = extractVehicleStats(urlRoot, $);
         details.wikiLink = page;
         await db.insertVehicleData(details);
+        progress.push(page);
       }
     }
 
     // Queue links
     $("a").each((i, e) => {
-      const url = $(e).attr("href");
+      const path = $(e).attr("href");
+      if (path == null) return;
+
+      let url = new URL(path, urlRoot);
+      if (url == null) return;
+      url = url.toString();
+
+      if (url.includes("&")) {
+        url = url.split("&")[0];
+      }
+
       let domain = "";
-      if (url != null && url.includes('https://')) {
+      if (url.includes('https://')) {
         domain = url.replace('https://', '').split('/')[0];
       }
 
-      // if (domainList.includes(domain)) {
-      //   queue.push(url);
-      // }
+      if (domainList.includes(domain) && !queue.includes(url)) {
+        queue.push(url);
+      }
     })
-
+    
     index++;
-    // sleep(1000);
+    if (index % 4 == 0) {
+      // logger.info(`Crawled ${index + 1} pages.`);
+      // logger.info(`Inserted: ${progress.join(', ')}`)
+      progress = [];
+    }
+    
+    const randomSec = Math.random() * 3 + 1;
+    sleep(randomSec * 1000);
   }
 
   logger.info("Scraping completed. Exiting.");

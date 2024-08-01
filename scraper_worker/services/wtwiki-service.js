@@ -51,7 +51,7 @@ export const getLastPageUpdate = async (url) => {
       return { success: true, data: res[0].datemodified }
   }
   catch (e) {
-    dbLogger.error(e);
+    dbLogger.error(`Error encountered retrieving page log for page ${url}\n` + e);
   }
 
   return { success: false }
@@ -67,7 +67,7 @@ export const insertPageLog = async (url, dateModified) => {
     return { success: true }
   }
   catch (e) {
-    dbLogger.error(e);
+    dbLogger.error(`Error encountered inserting ${url} into page log\n` + e);
   }
 
   return { success: false }
@@ -76,7 +76,7 @@ export const insertPageLog = async (url, dateModified) => {
 export const updatePageLog = async (url, dateModified) => {
   try {
     await db`
-      UPDATE wtwiki_schema.visited_page_log(url, datemodified)
+      UPDATE wtwiki_schema.visited_page_log
       SET datemodified=${dateModified}
       WHERE url=${url}
       `
@@ -84,7 +84,7 @@ export const updatePageLog = async (url, dateModified) => {
     return { success: true }
   }
   catch (e) {
-    dbLogger.error(e);
+    dbLogger.error(`Error encountered updating ${url}\n` + e);
   }
 
   return { success: false }
