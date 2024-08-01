@@ -1,19 +1,23 @@
 import { db, dbLogger } from "./db-util.js";
+import { sha1 } from "js-sha1";
+
 
 export const insertVehicleData = async (jsonData) => {
   try {
     const res = await db`
-      SELECT *
+      SELECT id
       FROM wtwiki_schema.vehicle
       WHERE name=${jsonData.title}
       `
+
+    const contentHash = sha1(JSON.stringify(jsonData));
 
     let count = 0;
     // Insert if new
     if (res.length < 1) {
       const insert = await db`
-        INSERT INTO wtwiki_schema.vehicle(name, data)
-        VALUES (${jsonData.title}, ${jsonData})
+        INSERT INTO wtwiki_schema.vehicle(name, data, contenthash)
+        VALUES (${jsonData.title}, ${jsonData}, ${contentHash})
         `
       count = insert.length;
     }
@@ -21,7 +25,7 @@ export const insertVehicleData = async (jsonData) => {
       // Update
       const update = await db`
         UPDATE wtwiki_schema.vehicle
-        SET data=${jsonData}
+        SET data=${jsonData}, contenthash=${contentHash}
         WHERE name=${jsonData.title}`
 
       count = update.length;
@@ -37,55 +41,4 @@ export const insertVehicleData = async (jsonData) => {
   }
 
   return { success: false };
-}
-
-export const getLastPageUpdate = async (url) => {
-  try {
-    const res = await db`
-      SELECT datemodified
-      FROM wtwiki_schema.visited_page_log
-      WHERE url=${url}
-      `
-
-    if (res.length > 0)
-      return { success: true, data: res[0].datemodified }
-  }
-  catch (e) {
-    dbLogger.error(`Error encountered retrieving page log for page ${url}\n` + e);
-  }
-
-  return { success: false }
-}
-
-export const insertPageLog = async (url, dateModified) => {
-  try {
-    await db`
-      INSERT INTO wtwiki_schema.visited_page_log(url, datemodified)
-      VALUES (${url}, ${dateModified})
-      `
-
-    return { success: true }
-  }
-  catch (e) {
-    dbLogger.error(`Error encountered inserting ${url} into page log\n` + e);
-  }
-
-  return { success: false }
-}
-
-export const updatePageLog = async (url, dateModified) => {
-  try {
-    await db`
-      UPDATE wtwiki_schema.visited_page_log
-      SET datemodified=${dateModified}
-      WHERE url=${url}
-      `
-
-    return { success: true }
-  }
-  catch (e) {
-    dbLogger.error(`Error encountered updating ${url}\n` + e);
-  }
-
-  return { success: false }
 }

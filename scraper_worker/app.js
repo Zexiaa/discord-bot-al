@@ -1,7 +1,6 @@
 import { seedList, domainList } from "./constants.js";
 import { createLogger, format, transports } from 'winston';
 import { disconnectDb, initDb } from "./services/db-util.js";
-import { DateTime } from "luxon";
 import * as db from "./services/wtwiki-service.js";
 import * as cheerio from "cheerio";
 
@@ -34,45 +33,15 @@ const startWarthunderCrawler = async () => {
     const html = await fetch(page).then(res => res.text());
     const $ = cheerio.load(html);
 
-    let updatedDate = DateTime.local();
-    let updateMsg = '';
-    try {
-      updateMsg = $("li[id='footer--lastmod']").first().text();
-      const date = updateMsg.split(",")[0].split("on")[1];
-      const time = updateMsg.split(",")[1].replace('at', '').replace('.', '').trim();
-      updatedDate = DateTime.fromFormat(`${date} ${time}`, "d MMMM yyyy H:mm", { zone: "utc" });
-    }
-    catch (e) {
-      logger.error(`Invalid datetime extracted from '${page}'\nFrom string '${updateMsg}'\n` + e)
-    }
-
-    let isPageChanged = true;
-    const res = await db.getLastPageUpdate(page);
-    if (!res.success) {
-      await db.insertPageLog(page, updatedDate);
-    }
-    else {
-      const dataDateString = new Date(res.data).toISOString();
-      const lastUpdated = DateTime.fromISO(dataDateString);
-
-      if (updatedDate > lastUpdated) {
-        await db.updatePageLog(page, updatedDate);
-      }
-      else {
-        // Page has not changed don't crawl
-        isPageChanged = false;
-      }
-    }
+    console.log(page)
 
     // Extract details
-    if (isPageChanged) {
-      const isVehicle = $("div.general_info_br").length > 0;
-      if (isVehicle) {
-        const details = extractVehicleStats(urlRoot, $);
-        details.wikiLink = page;
-        await db.insertVehicleData(details);
-        progress.push(page);
-      }
+    const isVehicle = $("div.general_info_br").length > 0;
+    if (isVehicle) {
+      const details = extractVehicleStats(urlRoot, $);
+      details.wikiLink = page;
+      await db.insertVehicleData(details);
+      progress.push(page);
     }
 
     // Queue links
@@ -105,8 +74,9 @@ const startWarthunderCrawler = async () => {
       progress = [];
     }
     
-    const randomSec = Math.random() * 3 + 1;
-    sleep(randomSec * 1000);
+    // const randomSec = Math.random() * 3 + 1;
+    // sleep(randomSec * 1000);
+    sleep(500)
   }
 
   logger.info("Scraping completed. Exiting.");
