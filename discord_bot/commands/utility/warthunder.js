@@ -12,10 +12,10 @@ export const command = {
       .setRequired(true)
   ),
   async execute(interaction) {
-		const name = interaction.options.getString('vehicle_name').toLowerCase();
-    const search = await getClosestNames(name);
-    if (search == null) {
-      await interaction.reply({ content: "Error encountered.", ephemeral: true });
+		const name = interaction.options.getString('vehicle_name');
+    const search = await getClosestNames(name.toLowerCase());
+    if (search == null || search.length < 1) {
+      await interaction.reply({ content: `No vehicles of name ${name} were found.`, ephemeral: true });
       return;
     }
 
@@ -35,6 +35,9 @@ export const command = {
       const message = `I could not find a vehicle by name: '${name}'\n` +
         `Did you mean the following:\n`;
 
+      if (search.length > 5)
+        search = search.slice(5);
+      
       const options = search.map(v => {
         return new ButtonBuilder()
           .setCustomId(v)
@@ -106,8 +109,7 @@ const getClosestNames = async (input) => {
   let allVehicles = [];
   const allVehCheck = await db.getAllVehicleNames();
   if (!allVehCheck.success) {
-    await interaction.reply({ content: "Error encountered.", ephemeral: true });
-    return;
+    return [];
   }
   else {
     allVehicles = allVehCheck.data;
@@ -118,9 +120,18 @@ const getClosestNames = async (input) => {
     const lookup = x.name;
     const levenshteinDistance = ld.distance(input, lookup.toLowerCase());
 
-    // Ignore words that are too different
-    if (levenshteinDistance < 3) {
+    // Cases where the user searches one part of the name (i.e. leopard)
+    if (lookup.toLowerCase().includes(input)) {
+      if (matches[0] == null) {
+        matches[0] = [lookup];
+      }
+      else {
+        matches[0].push(lookup);
+      }
+    }
 
+    // Ignore words that are too different
+    if (levenshteinDistance < 6) {
       if (matches[levenshteinDistance] == null) {
         matches[levenshteinDistance] = [lookup];
       }
