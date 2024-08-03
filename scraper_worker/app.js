@@ -1,8 +1,10 @@
 import { seedList, domainList } from "./constants.js";
 import { createLogger, format, transports } from 'winston';
 import { disconnectDb, initDb } from "./services/db-util.js";
+import { createClient } from "redis";
 import * as db from "./services/wtwiki-service.js";
 import * as cheerio from "cheerio";
+import "dotenv/config";
 
 const { combine, timestamp, label, printf } = format;
 const logFormat = printf(({ level, message, label, timestamp }) => {
@@ -20,20 +22,39 @@ const logger = createLogger({
   ],
 });
 
-const startWarthunderCrawler = async () => {
+const linkQueue = "wtwiki:linkQueue";
+const visitedLinks = "wtwiki:visitedLinks";
 
-  // TODO: Check for collisions
-  let queue = seedList;
+const startWarthunderCrawler = async () => {
+  const redis = await createClient({ url: `redis://${process.env.RD_USER}:${process.env.RD_PASSWORD}@${process.env.RD_HOST}:${process.env.RD_PORT}`})
+    .on("error", e => logger.error("Error connecting to redis client\n" + e))
+    .connect();
+  
+  if (!redis.isOpen) {
+    logger.error("Could not connect to redis client");
+    return;
+  }
+
+  // Reset
+  try {
+    await redis.DEL(linkQueue);
+    await redis.DEL(visitedLinks);
+  }
+  catch (e) {
+    logger.info("No existing queues were found.");
+  }
+  await redis.LPUSH(linkQueue, seedList);
+
   let index = 0;
   let progress = [];
-  while (index < queue.length) {
-    const page = queue[index];
+  while (await redis.LLEN(linkQueue) > 0) {
+    const page = await redis.RPOP(linkQueue);
+    await redis.HSET(visitedLinks, page, 1);
+
     const urlRoot = 'https://' + page.replace('https://', '').split('/')[0];
 
     const html = await fetch(page).then(res => res.text());
     const $ = cheerio.load(html);
-
-    console.log(page)
 
     // Extract details
     const isVehicle = $("div.general_info_br").length > 0;
@@ -45,6 +66,7 @@ const startWarthunderCrawler = async () => {
     }
 
     // Queue links
+    let links = [];
     $("a").each((i, e) => {
       const path = $(e).attr("href");
       if (path == null) return;
@@ -62,15 +84,23 @@ const startWarthunderCrawler = async () => {
         domain = url.replace('https://', '').split('/')[0];
       }
 
-      if (domainList.includes(domain) && !queue.includes(url)) {
-        queue.push(url);
+      if (domainList.includes(domain)) {
+        links.push(url);
       }
     })
     
+    for (const link of links) {
+      const isPageVisited = await redis.HEXISTS(visitedLinks, link);
+      const isPageQueued = await redis.LPOS(linkQueue, link);
+      if (!isPageVisited && isPageQueued == null) {
+        await redis.LPUSH(linkQueue, link);
+      }
+    }
+
     index++;
     if (index % 4 == 0) {
-      // logger.info(`Crawled ${index + 1} pages.`);
-      // logger.info(`Inserted: ${progress.join(', ')}`)
+      logger.info(`Crawled ${index + 1} pages.`);
+      logger.info(`Inserted: ${progress.join(', ')}`)
       progress = [];
     }
     
@@ -79,6 +109,7 @@ const startWarthunderCrawler = async () => {
     sleep(500)
   }
 
+  await redis.disconnect();
   logger.info("Scraping completed. Exiting.");
 }
 

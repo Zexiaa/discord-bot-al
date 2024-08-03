@@ -11,7 +11,6 @@ export const insertVehicleData = async (jsonData) => {
       `
 
     const contentHash = sha1(JSON.stringify(jsonData));
-    console.log(res[0].contenthash)
     let count = 0;
     // Insert if new
     if (res.length < 1) {

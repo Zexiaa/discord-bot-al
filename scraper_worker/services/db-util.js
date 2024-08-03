@@ -51,12 +51,6 @@ export const initDb = async () => {
           GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES
           TO scraper
         `
-
-      await db`
-        ALTER DEFAULT PRIVILEGES IN SCHEMA wtwiki_schema
-          GRANT SELECT ON TABLES
-          TO albot
-        `
     });
   }
   catch (e) {
